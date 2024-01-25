@@ -170,37 +170,6 @@ fn get_default_delimiter(format: Option<&FileFormat>) -> char {
 }
 
 // --------------------------------------------------
-// filepath: String,
-// max_rows: Option<usize>,
-// delimiter: Option<char>,
-// selected_columns: Option<Vec<String>>,
-// no_header: bool,
-// fn parse_table(
-//     filepath: &str,
-//     max_rows: Option<usize>,
-//     delimiter: Option<char>,
-//     selected_columns: Option<Vec<String>>,
-//     no_header: bool,
-// ) -> DataFrame {
-//     // if filepath is -, read from stdin
-//     if filepath == "-" {
-//         return parse_from_stdin(
-//             selected_columns,
-//             max_rows,
-//             delimiter.unwrap_or(','),
-//             !no_header,
-//         );
-//     }
-//     // if parquet file, parse it from filepath
-//     else if filepath.ends_with(".parquet") {
-//         return parse_parquet_file(filepath, selected_columns, max_rows);
-//     } else {
-//         let delimiter = get_delimiter(filepath, delimiter);
-//         return parse_csv_file(filepath, selected_columns, max_rows, delimiter);
-//     }
-// }
-
-// --------------------------------------------------
 // get the number of rows to parse
 fn get_num_rows_to_parse(
     max_rows: Option<u32>,
@@ -249,7 +218,7 @@ fn parse_from_stdin(
     has_header: bool,
 ) -> DataFrame {
     let mut v = Vec::<u8>::new();
-    let reader = std::io::stdin()
+    let _reader = std::io::stdin()
         .lock()
         .read_to_end(&mut v)
         .expect("cannot read from stdin");
@@ -341,7 +310,6 @@ fn main() -> () {
     let delimiter = get_delimiter(file_format, cli_args.delimiter);
 
     let df = {
-        println!("{}", cli_args.filepath == String::from("-"));
         if cli_args.filepath == String::from("-") {
             parse_from_stdin(
                 cli_args.selected_columns,
@@ -372,7 +340,8 @@ fn main() -> () {
 
     // print column names
     if cli_args.column_names_only {
-        println!("{:#?}", get_column_names(df.clone()))
+        println!("{:#?}", get_column_names(df.clone()));
+        return ();
     }
 
     // describe the table
@@ -381,11 +350,13 @@ fn main() -> () {
             "{}",
             df.describe(None).expect("Unable to get summary statistics")
         );
+        return ();
     }
 
     // print tail
     if cli_args.tail {
         println!("{}", df.tail(None));
+        return ();
     }
 
     // print sample
@@ -403,6 +374,7 @@ fn main() -> () {
             df.sample_n_literal(sample_size, false, false, None)
                 .expect("Unable to get summary statistics")
         );
+        return ();
     }
 
     // print entire df
